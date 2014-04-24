@@ -49,10 +49,12 @@ S_USE_THREADS in "stable.h":
         Define so that some of the routines are safe to use in
         concurrent threads.  The main issue here is that the library 
         allows the tables to be extended as needed on the fly.
-        this needs to be done is such a way that no tables disappear
+        This needs to be done is such a way that no tables disappear
         temporarily during rebuilding and that two different
         threads don't concurrently try to rebuild the same table.
-	Concurrent safe routines are: S_S(), S_U(), S_V(), S_S1(), S_UV().
+	Concurrent safe routines are: 
+             S_S(), S_U(), S_V(), S_S1(), S_UV(), S_report(),
+        and all others should not be used inside multiple threads.
 SAMPLEA_M in "psample.h": 
 	         by default undefined
 	Define this for an experimental way of sampling
@@ -87,8 +89,9 @@ GSL_POLYGAMMA in "digamma.h":
 
 Building
 =======
-Tested on a few versions on Ubuntu Linux and MacOSX,
+Tested (without threads) on a few versions on Ubuntu Linux and MacOSX,
 and a Windows XP using gcc.
+The S_USE_THREADS option only tested under Linux.
 If "lib/digamma.h" and "lib/rng.h" are unchanged you will not need
 any prerequisites.
 Note to compile faster versions, modify your compile time flags

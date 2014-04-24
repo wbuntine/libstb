@@ -1,6 +1,7 @@
 /*
  * Simple Dirichlet/Pitman-Yor Process sampling test
  * Copyright (C) 2011-2012 Wray Buntine and Lan Du
+ *           (C) 2014 Wray Buntine
  * All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla 
@@ -153,13 +154,14 @@ int main(int argc, char* argv[])
   int burnin = 0;
   stable_t *ST = NULL;
   int useN = DIM*2;
+  unsigned threads = 1;
 
   MAXN = 1;
   MAXT = MAXSTAB;
   /*
    *  default values for args
    */
-  while ( (c=getopt(argc, argv,"a:b:B:C:I:hH:I:N:S:s:T:v"))>=0 ) {
+  while ( (c=getopt(argc, argv,"a:b:B:C:I:hH:I:N:P:S:s:T:v"))>=0 ) {
     switch ( c ) {
     case 'h':
       usage(burnin?burnin:ITER/2, ITER, useN);
@@ -203,6 +205,12 @@ int main(int argc, char* argv[])
     case 'v':
       verbose++;
       break;
+#ifdef S_USE_THREADS
+      case 'P':
+      if ( !optarg || sscanf(optarg,"%u",&threads)!=1 )
+	yaps_quit("Need a valid 'P' argument\n");
+      break;
+#endif
     default:
       yaps_message("Bad command line argument\n\n");
       usage(burnin?burnin:ITER/2, ITER, useN);
