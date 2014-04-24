@@ -1,0 +1,197 @@
+CONTENTS
+========
+This directory contains a library "lib/" and some
+testing programs "test/".
+
+The library provides alternative ways of computing generalised
+second order Stirling numbers used in working with Pitman-Yor
+and Dirichlet processes (PYP and DP).  The relevant theory appears in:
+     http://arxiv.org/abs/1007.0296v2
+and some additional theory is given in "doc/alpha.pdf".
+
+The library functions are described in the header files:
+     stable.h   - tables for log of Stirling numbers
+     		  and for ratio of Stirling numbers
+     psample.h  - routines for sampling discount (a) and concentration (b)
+     sapprox.h  - approximate calcs from difference approximation
+     arms.h     - the ARM code from Gilks, used by samplers
+     sympoly.h  - evaluation and sampling of elementary symmetric polynomials
+		  (useful for some more complex models)
+
+Including is testing programmes, "list.c" and "demo.c", 
+an example use as well as a worked
+example of posterior sampling on the discount and concentration
+parameters of the PYP/DP, in psample.h.  Some core routines in
+stable.h are safe to use in a multi-threaded context, and for
+this use POSIX thread locking.
+
+While most of the code is under an MPL license, a small set
+of library routines are GPL'd.  Thus the library is GPL'd unless
+you take the trouble to reconfigure.  
+
+Options
+=======
+The library functions are self-contained in the default
+configuration.  Functions optionally available, sometimes
+from external libraries are:
+    * digamma functions, necessary, provided by GPL'd code.
+    * trigamma and other polygamma functions, used sometimes
+      for approximation and for the slice sampler for Newton-Raphson
+       of the concentration parameter b, optionally provided by GSL.
+    * random number generators, using rand48 (by default)
+    * beta, gamma and Gaussian samplers, provided by GPL'd code.
+These dependencies are isolated in "lib/digamma.h" and
+"lib/rng.h" so redefine these to change these around.
+
+Defines used to configure the system are:
+S_USE_THREADS in "stable.h":
+                 by default undefined
+        Define so that some of the routines are safe to use in
+        concurrent threads.  The main issue here is that the library 
+        allows the tables to be extended as needed on the fly.
+        this needs to be done is such a way that no tables disappear
+        temporarily during rebuilding and that two different
+        threads don't concurrently try to rebuild the same table.
+	Concurrent safe routines are: S_S(), S_U(), S_V(), S_S1(), S_UV().
+SAMPLEA_M in "psample.h": 
+	         by default undefined
+	Define this for an experimental way of sampling
+        discount.  Often faster.  It goes and regenerates
+        all the table occupancies, the full configuration of
+        the Chinese restaurant ... possible in linear time
+	using the Stirling numbers.  With the configuration
+	one can then resample discount without needing
+        the Stirling numbers table.
+PSAMPLE_ARS in "psample.h": 
+	        by default defined
+	Use the ARS (adaptive rejection sampling) routine
+        to sample hyperparamaters, not slice sampling.
+        Slice sampling works well for sampling the discount,
+        but when sampling concentration with large data numbers,
+        We need to start off with a bit of gradient ascent to
+        get us into a better starting place, and this requires
+        polygamma functions ... digamma gradient.
+LS_NOPOLYGAMMA in "digamma.h": 
+	        by default undefined
+	Choosing not to use polygamma functions is an option
+        if you use the ARS, set by defining PSAMPLE_ARS.
+	Some functions may work a little bit slower.
+        If using slice sampling, polygamma functions are essential.
+GSL_POLYGAMMA in "digamma.h": 
+	        by default undefined
+	If LS_NOPOLYGAMMA is not defined, then define this
+        to use the standard GSL polygamma functions.
+	Otherwise, the Mathlib GPL'd versions available
+        in the code will be used.
+     
+
+Building
+=======
+Tested on a few versions on Ubuntu Linux and MacOSX,
+and a Windows XP using gcc.
+If "lib/digamma.h" and "lib/rng.h" are unchanged you will not need
+any prerequisites.
+Note to compile faster versions, modify your compile time flags
+accordingly,  e.g.,  -O5 -DNDEBUG
+
+   cd lib
+   #  make the library
+   make
+   cd ..
+   #  optional, should compile OK if lib did
+   cd test
+   #  - a simple value lister, lets you see the values
+   make list
+   #  - see what it does
+   ./list
+   #  - create the "demo" executable with all sorts of bells and whistles
+   #    for evaluating the Stirling numbers
+   #  - to see the options, execute:
+   #        ./demo -h
+   make demo
+   #  - check the simple options
+   ./demo -h
+   #  - run with fitting the concentration
+   ./demo -H5 -b 10
+
+
+Installing
+==========
+Install the library and the header files if you want other programmes
+to make use of the functions in the library.
+Copy the library "lib/libstb.a" and the header files 
+"stable.h", "sapprox.h", to wherever is useful for you.
+If using the parameter samplers, samplea() and sampleb(), then
+you also need "psample.h", "arms.h", "rng.h" and "lgamma.h".
+    #  PREFIX is the root directory for installation
+    cp lib/*.h $PREFIX/include/
+    cp lib/libstb.a $PREFIX/lib/
+
+
+Detail
+======
+The following files give links to key libraries that you can 
+change if you want to alter dependencies
+or remove use of the GPL'd code:
+	rng.h digamma.h  
+Discussion of options for setting this up *without* GPL'd code is
+above in "options".
+
+For testing purposes, the following is kept: yaps.h
+
+To see how to use the library in more detail, see the examples
+in "test/list.c" and "test/demo.c".  This also shows how to do posterior sampling
+on the discount and concentration parameters of the PYP/DP.
+
+In addition, "precision_test.c" is a stand alone program to
+compare the two Stirling number recursions when done in
+float versus double.  This is intended to evaluate how the
+finite precision affects the calculations, and demonstrates
+the "ratio of Stirling number" recursion is far more
+accurate.
+
+The adaptive rejection sampling code from:
+   http://www1.maths.leeds.ac.uk/~wally.gilks/adaptive.rejection/web_page/Welcome.html
+is included as "arms.h" and "arms.c".
+This is on since the slice sampler is off by default.
+Note the slice sampler needs the polygamma function defined
+(see "digamma.h" to enable it).
+Note naive slice sampling *doesn't* work when sampling the concentration
+parameter ... you need to warm up the sampler with a bit of fixed
+point optimisation.
+
+See the relevant "#define" in "lib/psample.h".
+
+LICENSES
+========
+
+WARNING:   The default configuration uses samplers grabbed
+from the GSL and polygamma functions grabbed from MathLib/R.
+This is done to keep the library completely self contained.
+These other codes are under GPL license.  To avoid the use of the GPLed
+code you will need to redefine these.  Note if the slice sampler
+is not used, the polygamma functions are not needed, and a
+digamma function is available, so all you will need to
+provide are the samplers.
+
+The two files "gslrandist.c" and "polygamma.c" are under GPL and 
+the license details are given at the top of the files.
+The files "arms.[ch]" have no specified license and author is Wally Gilks.
+
+The two header files DEIntegrationConstants.h DEIntegrator.h come
+from John D. Cook so should not be further used without reference 
+to his original sources:
+  https://workspaces.codeproject.com/john-d-cook/fast-numerical-integration/code
+
+The remaining Source Code is subject to the terms of the 
+Mozilla Public License, v.2.0. If a copy of the MPL was not
+distributed with this file, You can obtain one at
+      http://mozilla.org/MPL/2.0/.
+
+Authors (except gslrandist.c, polygamma.c and arms.[ch] and test/DE*.h):
+     Copyright 2011-2013 Wray Buntine (wray.buntine@nicta.com.au)
+              Lan Du (lan.du@nicta.com.au)
+Contact: 
+     Wray Buntine (wray.buntine@nicta.com.au)
+
+

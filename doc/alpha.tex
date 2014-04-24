@@ -1,0 +1,461 @@
+\documentclass{article}
+
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\newcommand{\doubleminus}{\!-\!\!-}
+\newcommand{\doubleplus}{\!+\!\!+}
+\newcommand{\plusequal}{\!+\!\!=}
+\newcommand{\minusequal}{\!-\!\!=}
+\def\expec#1#2{{\rm I\!E}_{#1}\left[#2\right]}
+
+\begin{document}
+
+\author{Wray Buntine\\
+   Machine Learning Research Group, NICTA\\
+   Canberra, ACT\\
+   {\tt wray.buntine@nicta.com.au}
+}
+\title{Hyper-parameter Estimation for the Dirichlet Prior}
+\maketitle
+
+\begin{abstract}
+A common scenario in topic modelling is where one has samples from a 
+Dirichlet, but the Dirichlet parameters themselves are unknown.
+This technical note describes theory and algorithms for estimation 
+for this situation using Poisson Dirichlet processes.
+Some of the algorithms are coded up as {\tt samplea()} and
+{\tt sampleb()} in the {\tt libstb} library, documented
+in "psample.h".
+\end{abstract}
+
+\section{Basic Theory}
+
+The background theory for this note is given in
+\cite{Bun12}.
+
+\subsection{The Model}
+Topics for each document come from a Dirichlet with
+parameter $\vec\alpha=b \vec{m}$.
+The mean parameter $\vec{m}$ itself comes from a symmetric
+Dirichlet with concentration parameter $b_0$.
+So we have:
+\begin{eqnarray*}
+\vec{n}_i  &\sim& \mbox{multinomial}_K\left(\vec\mu_i,N_i\right)~~~~~~~~~
+\forall i\\
+\vec\mu_i &\sim& \mbox{Dirichlet}_K(b\vec{m})~~~~~~~~~~~~~~~~~
+\forall i\\
+\vec{m}&\sim& \mbox{Dirichlet}_K\left(\frac{b_0}{K}\vec{1}\right)\\
+b  &\sim&\mbox{Gamma}(\sigma_b,s_b)
+\end{eqnarray*}
+Here $s_b$ is the scale and $\sigma_b$ is the shape
+of the gamma prior on concentration parameter $b$.
+Using Dirichlet processes for the first 
+Dirichlets on $\vec\mu_i$ and integrating out
+both $\vec\mu_i$ and $\vec{m}$ yields a posterior
+\begin{eqnarray}
+\label{eq:joint}
+\lefteqn{p(b ,\forall i : \vec{n}_i, \vec{t}_i| b_0,K,\forall i : N_i) ~=}&&\\
+\nonumber
+&& e^{- b/s_b}b^{\sigma_b-1} \prod_i \left( \frac{b^{t_{i,.}}\Gamma(b)}{\Gamma(N_i+b)} 
+               \prod_k S^{n_{i,k}}_{t_{i,k},0} \right)
+   \frac{\Gamma(b_0)}{\Gamma(b_0/K)^K}
+   \frac{\prod_k \Gamma(t_{.,k}+b_0/K)}{\Gamma(t_{.,.}+b_0)}
+\end{eqnarray}
+Our problem is we need to sample the matrix of $t_{i,k}$ values.
+These satisfy
+$t_{i,l}\le n_{i,k}$ and
+$t_{i,l}=0$ if and only if $n_{i,k}=0$.
+
+Alternatively, one can use a Poisson-Dirichlet process on the
+$\vec\mu_i$, for $0<a<1$ and $b>-a$,
+\[
+\vec\mu_i ~\sim~ \mbox{PDP}(a,b,\vec{m})~~~~~~~~~~~~~~~~~\forall i
+\]
+and the term in the large brackets in Equation~(\ref{eq:joint}) becomes
+\[
+\left( a^{t_{i,.}}\frac{\Gamma(t_{i,.}+b/a)\Gamma(b)}{\Gamma(b/a)\Gamma(N_i+b)} 
+               \prod_k S^{n_{i,k}}_{t_{i,k},a} \right)
+\]
+
+\subsection{Strategy}
+
+For a fixed $a$, we begin by doing a crude estimate
+for the $\vec{t}_i$, and then jointly sample 
+$\vec{t}_i$ and $b$ starting from the estimate.
+From this, estimates can be got of $b$ and
+\[
+\widehat{\vec{m}}
+~=~
+\frac{t_{.,k}+b_0/K}{t_{.,.}+b_0}
+\]
+
+\subsection{Sampling $b$}
+Introduce the auxiliary variable $q_i\sim \mbox{Beta}(b,N_i)$,
+then the above terms in $b$ get changed to
+\begin{eqnarray*}
+p(b,\forall i : q_i |a=0, b_0,K,\forall i : \vec{n}_i, N_i)
+\propto&
+e^{- b/s_b}b^{t_{.,.}+\sigma_b-1} \prod_i q_i^{b-1}(1-q_i)^{N_i-1} \\
+p(b,\forall i : q_i |a>0, b_0,K,\forall i : \vec{n}_i, N_i)
+\propto&
+e^{- b/s_b}b^{\sigma_b-1} \prod_i  \frac{\Gamma(t_{i,.}+b/a)}{\Gamma(b/a)}q_i^{b-1}(1-q_i)^{N_i-1} 
+\end{eqnarray*}
+
+\subsubsection{Sampling $b$ when $a=0$}
+Thus for $a=0$ for posterior sampling we have the following probability equations
+\begin{eqnarray*}
+b|\vec{q} &\sim & \mbox{Gamma}\left(\sigma_b+t_{.,.},1/s_b+\sum_i \log 1/q_i\right) ~,\\
+q_i|b & \sim& \mbox{Beta}(b,N_i)~,
+\end{eqnarray*}
+according to which we can do Gibbs sampling.
+Note that
+\[
+\expec{q_i|b}{log 1/q_i} ~=~\psi(N_i+b) - \psi(b) ~,
+\]
+where $\psi(\cdot)$ is the digamma function.
+so this could be approximated as
+\[
+b ~\sim ~ \mbox{Gamma}\left(\sigma_b+t_{.,.}, 1/s_b+
+   \sum_i \left( \psi(N_i+b) - \psi(b) \right)\right)~,
+\]
+or
+\[
+b~\approx~\frac{\sigma_b+t_{.,.}}{1/s_b+
+   \sum_i \left( \psi(N_i+b) - \psi(b) \right)} ~.
+\]
+
+\subsubsection{Sampling $b$ when $a>0$}
+When $a>0$, the condition posterior on $b$ given $\vec{q}$ is
+easily seen to be log concave when $\sigma_b\ge 1$.
+Note that assuming $\sigma_b= 1$ makes the power of $b$ disappear.
+
+For this task one can use slice sampling or adaptive rejection
+sampling, both seem to work well.  Slice sampling is
+easier to implement but needs a reasonable
+starting point
+(starting at a very low probability point will mean the
+slice sampler takes a long while to warm up).
+Thus for slice sampling, we also need to find an
+approximate MAP point.  We do this by running a few
+iterations of a fixed point maximiser.
+
+The maximum can be found by differentiation and is given by
+\[
+0~=~ \frac{1}{a}\sum_i \left(\psi(t_{i,.}+b/a) -\psi(b/a)\right)
+- 1/s_b+ \frac{(\sigma_b-1)}{b}
+     +\sum_i \log 1/q_i      ~.
+\]
+Letting $Q=1/s_b+\sum_i \log 1/q_i$.
+Note the maximum can be found fairly quickly via a fixed point
+\[
+b` ~\leftarrow ~a 
+      \psi^{-1}\left(\frac{1}{I}\sum_i \psi(t_{i,.}+b/a) - \frac{aQ}{I}
+      + \frac{a(\sigma_b-1)}{bI}\right)
+\]
+because
+$\left|\frac{\mbox{d}b'}{\mbox{d}b}\right|<1$ 
+when some $t_{i,.}>0$. 
+The inverse of the digamma function is provided by Minka, 
+Appendix~C in ~\cite{Minka00}.
+
+\subsection{Sampling $t_{i,k}$}
+Considering just the terms in $t_{i,k}$ we have the marginal posterior
+\[
+p\left(t_{i,k} | b ,b_0,K,\forall i : \vec{n}_i, \vec{t}_i\right) ~\propto~
+\left\{
+\begin{array}{lr}
+b^{t_{i,k}}  S^{n_{i,k}}_{t_{i,k},0}  \frac{\Gamma(t_{.,k}+b_0/K)}{\Gamma(t_{.,.}+b_0)}
+ & \mbox{ if } a \equiv 0\\
+(b|a)_{t_{i,.}}  S^{n_{i,k}}_{t_{i,k},a}  \frac{\Gamma(t_{.,k}+b_0/K)}{\Gamma(t_{.,.}+b_0)}
+ & \mbox{ if } a > 0\\
+\end{array}
+\right.
+\]
+Note when $n_{i,k}\le 1$, then $t_{i,k}=n_{i,k}$ and no 
+sampling is needed.  So only consider those cases where $n_{i,k}>1$.
+
+Making an approximation for
+$\frac{\Gamma(t_{.,k}+b_0/K)}{\Gamma(t_{.,.}+b_0)}$
+of $\psi_k^{t_{i,k}}$ we get an initialisation where
+$t_{i,k}$ can be independently initialised according to
+\[
+t_{i,k}~\leftarrow ~ 
+\min\left(n_{i,k}, \mbox{argmax}_{t_{i,k}} \left((b+a\,t_{i,.})\psi_k\right) ^{t_{i,k}}  S^{n_{i,k}}_{t_{i,k},a} \right)~,
+\]
+before standard Gibb sampling begins.
+
+For sampling $\vec{t}$ we will use Chen {\it et al.}'s table indicators
+approach.
+For this,
+\[
+p\left(t_{i,k},\vec{r}_{i} |
+ b ,b_0,K,\forall i : \vec{n}_i, \vec{t}_i\right) ~\propto~
+{n_{i,k} \choose t_{i,k}}^{-1}
+p\left(t_{i,k} | b ,b_0,K,\forall i : \vec{n}_i, \vec{t}_i\right)
+\]
+Sampling proceeds as follows:
+\begin{enumerate}
+\item
+Remove the old indicator
+with probability $t_{i,k}/n_{i,k}$.
+\item
+If $t_{i,k}\equiv 0$, necessarily add a new indicator.
+Otherwise, add a new indicator depending on
+\[
+(t_{i,k}+1) (b+a\,t_{i,.}) S^{n_{i,k}}_{t_{i,k}+1,a} 
+\frac{t_{.,k}+b_0/K}{t_{.,.}+b_0}
+~~~~~~~\mbox{ versus }~~~~~~~~ (n_{i,k}-t_{i,k}+1)S^{n_{i,k}}_{t_{i,k},a} 
+\]
+\end{enumerate}
+
+\subsection{Sampling $a$}
+When $a>0$ it too can be sampled.
+\begin{equation}\label{eq:sa}
+p(a |a>0, b, b_0,K,\forall i : \vec{n}_i, N_i)
+\propto
+\prod_i \left( a^{t_{i,.}}
+\frac{\Gamma(t_{i,.}+b/a)}{\Gamma(b/a)} 
+               \prod_k S^{n_{i,k}}_{t_{i,k},a} \right)
+\end{equation}
+This is known to be log concave\footnote{Although, this is
+quite complicated to prove and is done elsewhere.},
+moreover the posterior from experience is known to be moderately
+flat.
+The only problem is that computing the posterior for different
+discounts $a$ requires recomputing the Stirling numbers.
+To make this more efficient, the maximum used
+$n_{i,k}$ and $t_{i,k}$ is first computed.
+
+Alternatively, one can expand the term $S^n_{t,a}$ into its
+parts.  Recall from \cite{Bun12} is the normaliser for the
+Chinese Restaurant Distribution (CRD) for all partitions of $n$
+of size $t$.  So we sample such a partition $(n_1,...,n_t)$
+according to the CRD and use its probability in place of
+$S^n_{t,a}$.
+That is, let $I_n=(n_1,...,n_t)$ denote a partition of $n$
+for $t=1,...,n$ for CRD with discount $a>0$.
+\begin{eqnarray*}
+p(I_n\,\mid\, CRD,a,b,n) &=&\frac{(b|a)_t}{(b)_n} \prod_{k=1}^t (1-a)_{n_k-1} \\
+p(t\,\mid\, CRD,a,b,n) &=& \frac{(b|a)_t}{(b)_n} S^n_{t,a}\\
+p(I_n\,\mid\, CRD,a,b,n,t) &=& \frac{1}{S^n_{t,a}} \prod_{k=1}^t (1-a)_{n_k-1} \\
+\end{eqnarray*}
+Thus for each term $S^{n_{i,k}}_{t_{i,k},a}$ in Equation~(\ref{eq:sa}), we sample
+a partition of $n_{i,k}$ of size $t_{i,k}$ using the CRD
+giving $\vec{m}_{i,k}$, and then consider the derived marginal for $a$
+\[
+p\left(a |
+a>0, b, b_0,K,\forall i : \vec{n}_i, N_i; \forall_{i,k} \vec{m}_{i,k}\right)
+\propto
+\prod_i \left( a^{t_{i,.}} \frac{\Gamma(t_{i,.}+b/a)}{\Gamma(b/a)} 
+               \prod_k \prod_{l=1}^{t_{i,k}} (1-a)_{m_{i,k,l}-1} \right)
+\]
+This yields an expression that can be sampled for $a$ without recomputing
+the Stirling number tables.  It too is log concave using the
+same proof as for Equation~(\ref{eq:sa}).
+
+Sampling a partition $I_n=(m_1,...,m_t)$ of $n$ of size $t$ 
+can done using a variation of the CRD probabilities above
+that can be verified using properties of the 
+generalised Stirling number (see Theorem~17(ii) in \cite{Bun12}).
+The partition of $n$ of size $t$, $I_n$, can be sampled
+recursively using a partition of $n-m_t$ of size $t-1$
+denoted $I_{n-1}$.  So
+\[
+p(m_t\,\mid\, CRD,a,b,n,t) ~=~
+ \frac{S^{n-m_t}_{t-1,a}}{S^n_{t,a}} {n-1 \choose m_t-1} (1-a)_{m_t-1} 
+\]
+So sample $m_t$ according to this formula and then 
+sample a partition of $n-m_t$ of size $t-1$.
+This requires using the table of Stirling numbers already existing
+for discount $a$.
+
+\section{Algorithms}
+
+As initialisation, we need to compute a table of Stirling numbers.
+
+\noindent
+The algorithm keeps the following internal counts
+which do not need to be kept between calls but are
+used in the one call.
+Note the matrix $\vec{t}$ could be highly compressed, because
+its counts could be assumed to be one-two bytes only
+and only values needed are where $n_{d,k}>1$.
+\begin{algorithmic}[5]
+    \State $T$;\Comment{$t$ totals}
+    \State $\vec{Tk}$;\Comment{$t$ totals over docs, indexed by $k$}
+    \State $\vec{Td}$;\Comment{$t$ totals over topics, indexed by $d$}
+    \State $\vec{t}$; \Comment{$t$, indexed by $d,k$}
+\end{algorithmic}
+Note that $\vec{Td}$ is only used when $a>0$.
+
+Note that $\mbox{\sc Beta}(\cdot,\cdot)$,
+$\mbox{\sc Gaussian}(\cdot,\cdot)$,
+and $\mbox{\sc Gamma}(\cdot)$ functions are samplers
+according to the distributions.
+The second argumenbt to the Gaussian is the standard deviation,
+and the argument to the gamma is the shape parameter
+(with the scale left as 1).
+The $\mbox{U}()$ function returns a uniform random number
+on the unit interval.
+The $\mbox{\sc ST.V}()$ function is the Stirling number ratio V
+from \cite{Bun12}.
+
+\subsection{Approximating MAP for $\vec{t}$}
+\noindent
+Initialisation goes as follows.  This is called every time
+$\vec\alpha$ is sampled/optimised.
+\begin{algorithmic}[5]
+  \Function{initialise}{$b,\forall_i \vec{n}_i$}
+    \State $T=0$, $\vec{Tk}=\vec{0}$, $\vec{Td}=\vec{0}$
+    \For{documents $i=1..I$}
+      \Comment{First pass assigns default initialisation}
+      \For{topics $k=1..K$}
+      \If{$n_{i,k}>0$}
+      \State $t_{i,k}=1$, $Td_i\doubleplus$, $Tk_k\doubleplus$, $T\doubleplus$
+      \Else
+      \State $t_{i,k}=0$
+      \EndIf
+      \EndFor
+    \EndFor
+    \State local $\vec\psi = \mbox{Norm}(\vec{Tk})$
+    \For{documents $i=1..I$}
+      \Comment{Second pass does approximation}
+      \For{topics $k=1..K$}
+      \State local $fact = (b+a\,(Td_{i}-t_{i,k}/2)) \psi_k$
+      \If{$n_{i,k}>2$}
+      \State local $t'=1$
+      \While{$fact*\mbox{\sc ST.V}(n_{i,k},t'+1,0)>1 \mbox{ and } t'<n_{i,k}$}
+      \State $t'\doubleplus$
+      \EndWhile
+      \If{$t'>1$} 
+      \State $t_{i,k}=t'$
+      \State $t'\doubleminus$
+      \State $Tk_k\plusequal t'$,  $T\plusequal t'$
+      \EndIf
+      \EndIf
+      \EndFor
+    \EndFor
+    \EndFunction
+\end{algorithmic}
+
+\subsection{Sampling $b$}
+\noindent
+Sampling $b$ when $a=0$ goes as follows.  Note it uses the
+existing value of $b$ too.
+\begin{algorithmic}[5]
+  \Function{sample-b1}{$b$, $s_b$, $\sigma_b\ge 1$, $T$, $\vec{N}$, $a\equiv 0$}
+    \State local $logQ=1/s_b$
+    \For{documents $i=1..I$}
+    \State local $q \sim \mbox{\sc Beta}(b,N_i)$, 
+    \Comment{Careful, large $N_i$ canhave $q$ underflow}
+    \State $logQ ~\minusequal~ \log(q)$
+    \EndFor
+    \State $T \plusequal \sigma_b$.
+    \If{ $T>400$ }
+    \State $b ~\sim~ \mbox{\sc Gaussian}\left(T, \sqrt{T}\right)$    
+    \Comment{use if Gamma samplers broken for large $T$}
+    \Else
+    \State $b ~\sim~ \mbox{\sc Gamma}\left(T\right)$
+    \EndIf
+     \State $b ~\leftarrow ~  b/logQ$
+     \State {\bf return} $b$
+    \EndFunction
+\end{algorithmic}
+
+\noindent
+Sampling $b$ when $a>0$ is more complicated.
+We need a maximiser as well.
+\begin{algorithmic}[5]
+  \Function{$\psi^{-1}$}{$x$}
+  \State locale $guess$
+  \If{$x < -2.22$} 
+    \State $guess \leftarrow -1 / (x - \psi(1.0))$
+    \Else
+    \State $guess \leftarrow \exp(x) + 0.5$
+    \EndIf
+    \For{$i=0...4$}
+    \State $guess \minusequal (\psi(guess) - x)/ \psi_1(guess)$
+    \EndFor
+  \State {\bf return} $guess$
+  \EndFunction
+  \Function{prob-b2}{$b$, $\sigma_b\ge 1$, $Q$, $\vec{T}$, $a>0$}
+     \State local $logprob \leftarrow -b\, Q + (\sigma_b-1) \log b$
+     \For{documents $i=1..I$}
+         \State $logprob \plusequal \Gamma(T_i+b/a) - \Gamma(b/a)$
+     \EndFor
+     \State {\bf return} $logprob$
+  \EndFunction
+  \Function{map-b2}{$b$, $\sigma_b\ge 1$, $Q$, $\vec{T}$, $a>0$}
+    \State local $psiinv =0$
+    \For{documents $i=1..I$}
+    \State $psiinv \plusequal \psi(T_i+b/a)$
+    \EndFor
+     \State $psiinv~=~ \frac{psiinv}{I}+
+              \frac{a(\sigma_b-1)}{bI} - \frac{aQ}{I}$
+
+     \State {\bf return} $a\,\psi^{-1}(psiinv)$
+    \EndFunction
+\end{algorithmic}
+\begin{algorithmic}[5]
+  \Function{sample-b2}{$b$, $s_b$, $\sigma_b\ge 1$, $\vec{T}$, $\vec{N}$, $a>0$}
+    \State local $logQ=1/s_b$
+    \For{documents $i=1..I$}
+    \State local $q \sim \mbox{\sc Beta}(b,N_i)$, $logQ ~\minusequal~ \log(q)$
+    \EndFor
+    \State $b  \leftarrow \mbox{\sc map-b2}(b,\sigma_b, Q, \vec{T},a)$
+    \State $b \leftarrow \mbox{\sc SliceSample}\left(b,\mbox{\sc prob-b2}(b,\sigma_b, Q, \vec{T},a)\right)$
+      \State {\bf return} $b$
+    \EndFunction
+\end{algorithmic}
+
+
+\subsection{Main}
+\noindent
+The main algorithm.
+\begin{algorithmic}[5]
+    %\Require $\forall_i \vec{n}_i$ -- topic totals for each document
+    %\Require $\vec{N}$ -- document lengths
+    \medskip
+    \State  $\mbox{\sc initialise}\left(b,\forall_i \vec{n}_i\right)$
+    \For{documents $i=1..I$}
+      \For{topics $k=1..K$}
+      \If{ $n_{i,k}> 1$}
+      \State local $t'=t_{n,k}$
+      \State $Td_i ~\minusequal~ t'$, $Tk_k ~\minusequal~ t'$, $T ~\minusequal~ t'$
+      \For{ $n_{i,k}/2$ times}
+      \If{$\mbox{U}()<t'/n_{i,k}$} \State $t'\doubleminus$ \EndIf
+      \If{$t' \equiv 0$} \State $t' \leftarrow 1$ \Else
+      \State local $rp = \frac{t'+1}{n_{i,k}-t'+1}\, (b+a(Td_i+t')) \,
+              \mbox{\sc ST.V}\left(n_{i,k},t'+1,0\right) \frac{Tk_k+t'+b_0/K}{T+t'+b_0}$
+        \If{$\mbox{U}()<rp/(1+rp)$} \State $t'\doubleplus$ \EndIf
+        \EndIf
+      \EndFor
+      \State $t_{i,k}\leftarrow t'$      
+      \State $Td_i ~\plusequal~ t'$, $Tk_k ~\plusequal~ t'$, $T ~\plusequal~ t'$
+      \EndIf
+      \EndFor
+    \EndFor
+    \State $\vec{m} ~\leftarrow ~ \frac{1}{T+b_0} \left( \vec{Tk} + \frac{b_0}{K}\right)$
+    \State $b \leftarrow  \mbox{\sc Sample-b}(b,T,\vec{N})$
+    \State {\bf return}  $b$ and $\vec{m}$
+\end{algorithmic}
+
+\bibliographystyle{alpha}
+
+\begin{thebibliography}{10}
+\bibitem{Bun12}
+Buntine, W., Hutter, M.:
+\newblock A {B}ayesian view of the {P}oisson-{D}irichlet process.
+\newblock Technical Report arXiv:1007.0296v2, {\it ArXiv}, Cornell, February, 
+2012.
+
+\bibitem{Minka00}
+Minka, T.P.:
+\newblock Estimating a {D}irichlet distribution.
+\newblock Technical report, MIT (2000).  Revised 2012.
+\newblock {\tt http://research.microsoft.com/en-us/um/people/minka/papers/dirichlet/}
+\end{thebibliography}
+
+\end{document}
+    

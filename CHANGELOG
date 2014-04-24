@@ -1,0 +1,52 @@
+To version libstb-1.1:
+*	removed all references to GSL NEGINF and infinite/NAN handling
+        in library functions longer have GSL dependencies
+*       made all the library allocation functions return 1 on error
+*       removed all yap_*() dependencies in library functions
+*	added digamma.h to isolate use of GSL special functions
+*       added rng.h to isolate use of GSL random number routines in lib/
+*       fixed alloc bug in stable.c only seen when N==M
+*       added slice sampling
+*       restructured directory with test/ and lib/
+*       added the alpha.pdf documentation
+*       added sampleb() and samplea() functions to library
+
+To version libstb-1.2:
+*	added the lib/sxtable versions, which were elsewhere
+*       bug fix in sampleb() when a>0
+*       made generic INT types for stats passed to samplers
+
+To version libstb-1.3:
+*	modified ttable.h so it now creates an object, no more static tables
+
+To version libstb-1.4
+*       MAJOR upgrade!!!
+*       removed ttable.* suite and merged into new stable.*
+*       now expands uniformly in both dimensions N and T on call;
+*       flags for double/float, verbose, S and/or U+V tables;
+*       demoted "check.c" and replaced with the friendlier "demo.c"
+*       added sympoly.h for elementary symmetric polynomials, which
+*          become important in various more convoluted PYP models
+
+To version libstb-1.5
+*       made K and bpar dependent on [i] 
+*          -> WARNING, thus the interface has changed!
+*       fixed bug in samplea() when using getval()
+*       NICTA SVN version 58
+
+To version libstb-1.6
+*       some memory deallocation in arms.c
+*       added new "tag" to tables to help in debugging
+*       added new S_UV() routine, very handy for indicator sampling
+*       NICTA SVN version 66
+
+To version libstb-1.7
+*       added gslrandist.c and polygamma.c
+*       documented these, since they are under GPL
+*       gave option to define out the use of polygammas
+*	NICTA SVN version 73
+
+To version libstb-1.8
+*       added threading support
+*       removed sxtable.[hc]
+*       Moved to Github
