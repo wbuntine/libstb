@@ -154,7 +154,6 @@ int main(int argc, char* argv[])
   int burnin = 0;
   stable_t *ST = NULL;
   int useN = DIM*2;
-  unsigned threads = 1;
 
   MAXN = 1;
   MAXT = MAXSTAB;
