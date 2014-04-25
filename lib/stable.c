@@ -62,8 +62,10 @@ void realloc_hook(stable_t *sp, void **ptr, size_t size) {
   size_t ms = memsize(size);
   size_t oldsize = *(((size_t *)*ptr) - 1) - sizeof(size_t);
   assert(oldsize>0);
-  assert(oldsize<size);
+  if ( oldsize==size )
+ 	return;
   size += sizeof(size_t);
+  assert(oldsize<size);
   ptrtmp = malloc(size);
   if ( !ptrtmp ) {
     *ptr = NULL;
@@ -72,7 +74,7 @@ void realloc_hook(stable_t *sp, void **ptr, size_t size) {
   *(size_t *)ptrtmp = size;
   if ( sp ) sp->memalloced += ms - memsize(oldsize);
   ptrtmp = ((size_t *)ptrtmp) + 1;
-  memcpy(ptrtmp, *ptr, *(((size_t *)*ptr) - 1) );
+  memcpy(ptrtmp, *ptr, oldsize);
   ptrsave = *ptr;
   *ptr = ptrtmp;
   free((void *)(((size_t *) ptrsave) - 1));
