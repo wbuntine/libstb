@@ -22,7 +22,7 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include "rng.h"
+#include "srng.h"
 
 /*
  * This routine is based on the following article, with a couple of

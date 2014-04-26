@@ -24,7 +24,7 @@
 /*
  *   change this to use another RNG
  */
-#include "rng.h"
+#include "srng.h"
 #include "sympoly.h"
 
 /*

@@ -16,7 +16,7 @@
 #define __PSAMPLE_H
 
 #include "stable.h"
-#include "rng.h"
+#include "srng.h"
 #include "lgamma.h"
 
 /*

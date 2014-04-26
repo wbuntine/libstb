@@ -29,7 +29,7 @@
 #define __SYMPOLY_H
 
 #include <stdint.h>
-#include "rng.h"
+#include "srng.h"
 
 /*
  *   for optional statically declared arrays, but these are just

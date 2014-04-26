@@ -1,0 +1,18 @@
+"Hyper-parameter Estimation for the Dirichlet Prior"
+
+The file "alpha.tex" in this directory can be converted 
+to a PDF file (on most systems) by running LaTeX.   It compiles
+without other input using "latex" or "pdflatex".
+
+
+"A Bayesian View of the Poisson-Dirichlet Process"
+
+This 50 page review article is available on Arxiv:
+       http://arxiv.org/abs/1007.0296
+
+A related theory article is:
+   Theory of Dependent Hierarchical Normalized Random Measures
+   http://arxiv.org/abs/1205.4159
+which is about the related Normalised Generalised Gamma process.
+Some test code for this is in "test/ngg_*.c"
+	

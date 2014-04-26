@@ -7,7 +7,8 @@ The library provides alternative ways of computing generalised
 second order Stirling numbers used in working with Pitman-Yor
 and Dirichlet processes (PYP and DP).  The relevant theory appears in:
      http://arxiv.org/abs/1007.0296v2
-and some additional theory is given in "doc/alpha.pdf".
+and some additional theory is given in "doc/"
+(you will have to construct a PDF file from laTeX input).
 
 The library functions are described in the header files:
      stable.h   - tables for log of Stirling numbers
@@ -28,6 +29,24 @@ this use POSIX thread locking.
 While most of the code is under an MPL license, a small set
 of library routines are GPL'd.  Thus the library is GPL'd unless
 you take the trouble to reconfigure.  
+
+Quick version
+=============
+If you're happy with the default configuration, and don't want to
+use multi-core, and am happy with MPL license (and a few GPL functions),
+then here is the short version:
+
+1.  Change to the "lib" directory.
+2.  Edit the make file to set CFLAGS options.
+3.  Run "make".
+4.  Change to the test directory, "test".
+5.  Run "make demo".
+6.  Run the demo with "./demo" (on Unix box).
+    This will finish printing an estimate of T[4].
+7.  All going well, change directory back to "lib"
+    and copy "libstb.a" to a suitable library directory
+    and copy "*.h" to a suitable include directory.
+
 
 Options
 =======

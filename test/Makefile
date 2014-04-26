@@ -3,7 +3,7 @@
 #      but only used in check.c
 #  assumes GSL stored in regular paths
 CFLAGS = -I../lib/ -Wall -g # O5 -DNDEBUG 
-LDFLAGS = -L../lib/ -lstb -lm -lrt
+LDFLAGS = -L../lib/ -lstb -lm 
 
 ## MAC OSX versions
 #CFLAGS = -I/opt/local/include -I../lib/ -Wall -O5 -DNDEBUG 
@@ -24,7 +24,7 @@ list:   list.o
 	cc $(CFLAGS)  -o list list.o $(LDFLAGS)
 
 check:	check.o ../lib/$(LIBRARY)
-	cc  $(CFLAGS)  -o check check.o $(LDFLAGS)
+	cc  $(CFLAGS)  -o check check.o $(LDFLAGS) -lrt
 
 clean: 
 	rm -f *.o demo list check precision_test $(LIBRARY)

@@ -31,7 +31,7 @@
  *    all done with GSL calls, but all sampling using rng_*()
  *    interface here
  */
-#include "rng.h"
+#include "srng.h"
 
 /*
  *   Two options for sampling hyperparameters:

@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include "rng.h"
+#include "srng.h"
 // #include "yaps.h"
 
 #define TOOMANY 200

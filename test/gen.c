@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include "rng.h"
+#include "srng.h"
 
 int verbose = 0;
 

@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "rng.h"
+#include "srng.h"
 #include "digamma.h"
 #include "psample.h"
 

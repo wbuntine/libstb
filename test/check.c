@@ -40,7 +40,7 @@
 /*
  *    the RNG is GSL (usually) and all done through rng_*() interface
  */
-#include "rng.h"
+#include "srng.h"
 
 /*
  *   Two options for sampling hyperparameters:
