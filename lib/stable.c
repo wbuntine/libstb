@@ -62,7 +62,7 @@ void realloc_hook(stable_t *sp, void **ptr, size_t size) {
   size_t ms = memsize(size);
   size_t oldsize = *(((size_t *)*ptr) - 1) - sizeof(size_t);
   assert(oldsize>0);
-  if ( oldsize==size )
+  if ( oldsize>=size )
  	return;
   size += sizeof(size_t);
   assert(oldsize<size);
@@ -1005,17 +1005,33 @@ double S_S(stable_t *sp, unsigned N, unsigned T) {
 }
 
 void S_report(stable_t *sp, FILE *fp) {
-  if ( sp->tag ) 
-    fprintf(fp, "Stable '%s': ", sp->tag);
-  else
-    fprintf(fp, "Stable: ");
-  fprintf(fp, "a=%lf, N=%u/%u, M=%u/%u, %s%s %s",
-   sp->a, sp->usedN, sp->maxN, sp->usedM, sp->maxM, 
-   (sp->flags&S_STABLE)?"+S":"", 
-   (sp->flags&S_UVTABLE)?"+U/V":"", 
-   (sp->flags&S_FLOAT)?"float":"double");
+  if ( fp ) {
+    if ( sp->tag ) 
+      fprintf(fp, "Stable '%s': ", sp->tag);
+    else
+      fprintf(fp, "Stable: ");
+    fprintf(fp, "a=%lf, N=%u/%u, M=%u/%u, %s%s %s",
+     sp->a, sp->usedN, sp->maxN, sp->usedM, sp->maxM, 
+     (sp->flags&S_STABLE)?"+S":"", 
+     (sp->flags&S_UVTABLE)?"+U/V":"", 
+     (sp->flags&S_FLOAT)?"float":"double");
 #ifdef MEMALLOCED
-  fprintf(fp, " mem=%uk\n", sp->memalloced/1024);
+    fprintf(fp, " mem=%uk\n", sp->memalloced/1024);
 #endif
-  fprintf(fp, "\n");
+    fprintf(fp, "\n");
+  } else {
+    if ( sp->tag ) 
+      yaps_message("Stable '%s': ", sp->tag);
+    else
+      yaps_message("Stable: ");
+    yaps_message("a=%lf, N=%u/%u, M=%u/%u, %s%s %s",
+     sp->a, sp->usedN, sp->maxN, sp->usedM, sp->maxM, 
+     (sp->flags&S_STABLE)?"+S":"", 
+     (sp->flags&S_UVTABLE)?"+U/V":"", 
+     (sp->flags&S_FLOAT)?"float":"double");
+#ifdef MEMALLOCED
+    yaps_message(" mem=%uk", sp->memalloced/1024);
+#endif
+    yaps_message("\n");
+  }
 }
