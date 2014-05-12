@@ -1009,9 +1009,9 @@ double S_S(stable_t *sp, unsigned N, unsigned T) {
 void S_report(stable_t *sp, FILE *fp) {
   if ( fp ) {
     if ( sp->tag ) 
-      fprintf(fp, "Stable '%s': ", sp->tag);
+      fprintf(fp, "S-table '%s': ", sp->tag);
     else
-      fprintf(fp, "Stable: ");
+      fprintf(fp, "S-table: ");
     fprintf(fp, "a=%lf, N=%u/%u, M=%u/%u, %s%s %s",
      sp->a, sp->usedN, sp->maxN, sp->usedM, sp->maxM, 
      (sp->flags&S_STABLE)?"+S":"", 
@@ -1023,9 +1023,9 @@ void S_report(stable_t *sp, FILE *fp) {
     fprintf(fp, "\n");
   } else {
     if ( sp->tag ) 
-      yaps_message("Stable '%s': ", sp->tag);
+      yaps_message("S-table '%s': ", sp->tag);
     else
-      yaps_message("Stable: ");
+      yaps_message("S-table: ");
     yaps_message("a=%lf, N=%u/%u, M=%u/%u, %s%s %s",
      sp->a, sp->usedN, sp->maxN, sp->usedM, sp->maxM, 
      (sp->flags&S_STABLE)?"+S":"", 
