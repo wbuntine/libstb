@@ -103,7 +103,8 @@ static double logadd(double V, double lp) {
 }
 
 void S_tag(stable_t *S, char *tag) {
-  S->tag = tag;
+  S->tag = malloc(strlen(tag)+1);
+  strcpy(S->tag,tag);
 }
 
 stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM, 
@@ -963,6 +964,7 @@ double S_S(stable_t *sp, unsigned N, unsigned T) {
  void S_free(stable_t *sp) {
   if ( !sp )
     return;
+  if ( sp->tag ) free(sp->tag);
   if ( sp->S1 )  myfree(sp->S1);
   if ( sp->SfrontN )  myfree(sp->SfrontN);
   if ( sp->SfrontM )  myfree(sp->SfrontM);

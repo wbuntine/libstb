@@ -44,7 +44,7 @@
 /*
  *   define if compiling in threads
  */
-//#define S_USE_THREADS
+#define S_USE_THREADS
 #ifdef S_USE_THREADS
 #include <pthread.h>
 #endif
