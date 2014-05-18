@@ -1,6 +1,6 @@
 /*
  * Stirling Number table handling
- * Copyright (C) 2009-2012 Wray Buntine 
+ * Copyright (C) 2009-2014 Wray Buntine 
  * All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla 
