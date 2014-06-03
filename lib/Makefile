@@ -9,7 +9,7 @@ SRC = stable.c digamma.c arms.c sapprox.c sslice.c \
 	sampleb.c samplea.c yaps.c lgamma.c sympoly.c digammainv.c \
         gslrandist.c
 HFILES = stable.h arms.h sapprox.h psample.h digamma.h \
-	rng.h yaps.h lgamma.h sympoly.h
+	srng.h yaps.h lgamma.h sympoly.h
 OBJ = $(SRC:.c=.o)
 LIBRARY = libstb.a
 
