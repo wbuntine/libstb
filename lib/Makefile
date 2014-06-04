@@ -19,6 +19,9 @@ library:  $(OBJ)
 clean: 
 	rm -f *.o $(LIBRARY)
 
+distclean:  clean
+	rm -f TAGS *.d
+
 etags:  $(SRC) $(HFILES)
 	etags  $(SRC) $(HFILES)
 
