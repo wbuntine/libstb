@@ -45,7 +45,7 @@ typedef struct metropolis { /* for metropolis step */
 
 /* *********************************************************************** */
 
-#define RAND_MAX 2147483647      /* For Sun4 : remove this for some systems */ 
+#define A_RAND_MAX 2147483647      /* For Sun4 : remove this for some systems */ 
 #define XEPS  0.00001            /* critical relative x-value difference */
 #define YEPS  0.1                /* critical y-value difference */
 #define EYEPS 0.001              /* critical relative exp(y) difference */
@@ -385,7 +385,7 @@ void invert(double prob, ENVELOPE *env, POINT *p)
 /* *p      : a working POINT to hold the sampled value */
 
 {
-  double u,xl,xr,yl,yr,eyl,eyr,prop;
+  double u,xl=0,xr=0,yl,yr,eyl,eyr,prop;
   POINT *q;
 
   /* find rightmost point in envelope */
@@ -687,7 +687,7 @@ int meet (POINT *q, ENVELOPE *env, METROPOLIS *metrop)
 /* *metrop   : for metropolis step */
 
 {
-  double gl,gr,grl,dl,dr;
+  double gl=0,gr=0,grl,dl=0,dr=0;
   int il,ir,irl;
 
   if(q->f){
@@ -896,7 +896,7 @@ double u_random()
 
 /* to return a standard uniform random number */
 {
-   return ((double)rand() + 0.5)/((double)RAND_MAX + 1.0);
+   return ((double)rand() + 0.5)/((double)A_RAND_MAX + 1.0);
 }
 
 /* *********************************************************************** */

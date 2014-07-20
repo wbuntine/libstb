@@ -208,10 +208,10 @@ double psidiff(int N, double alpha, double pa) {
     return 1/alpha + 1/(1+alpha) + 1/(2+alpha);
   } 
 #ifdef LS_NOPOLYGAMMA
-  return digamma(N+alpha) - (pa>0)?pa:digamma(alpha);
+  return digamma(N+alpha) - ((pa>0)?pa:digamma(alpha));
 #else
 else if ( alpha>0.5 ) {
-    return digamma(N+alpha) - (pa>0)?pa:digamma(alpha);
+    return digamma(N+alpha) - ((pa>0)?pa:digamma(alpha));
   } else if ( pa != 0 ) {
     /*
      *  lgamma(alpgha) precomputed as pa
