@@ -180,4 +180,11 @@ double S_V(stable_t *sp, unsigned n, unsigned m);
  */
 void S_report(stable_t *sp, FILE *fp);
 
+#ifdef isfinite
+#define ISFINITE(x) isfinite(x)
+#else
+#define ISFINITE(x) finite(x)
+#endif
+
+
 #endif

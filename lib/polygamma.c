@@ -206,7 +206,7 @@ static void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *
 	if (x == (long)x) {
 	    /* non-positive integer : +Inf or NaN depends on n */
 	    for(j=0; j < m; j++) /* k = j + n : */
-		ans[j] = ((j+n) % 2) ? INFINITY : FP_NAN;
+		ans[j] = ((j+n) % 2) ? HUGE_VAL : FP_NAN;
 	    return;
 	}
 	/* This could cancel badly */

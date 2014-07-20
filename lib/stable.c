@@ -361,7 +361,7 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
 	    sp->S[N-3][M-2] = 
 	      logadd(log(N-M*a-1.0)+((M<N-1)?sp->S[N-4][M-2]:0), 
 		     sp->S[N-4][M-3]);
-	    assert(isfinite(sp->S[N-3][M-2]));
+	    assert(ISFINITE(sp->S[N-3][M-2]));
 	  }
 	}
       }
@@ -381,7 +381,7 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
 	for (M=3; M<=usedM && M<N; M++) {
 	  sp->S[N-3][M-2] = 
 	    logadd(log(N-M*a-1.0)+((M<N-1)?sp->S[N-4][M-2]:0), sp->S[N-4][M-3]);
-	  assert(isfinite(sp->S[N-3][M-2]));
+	  assert(ISFINITE(sp->S[N-3][M-2]));
 	}
        }
     } else {
@@ -406,7 +406,7 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
 	    if ( M==N-1 ) saveS = 0;
 	    sp->SfrontN[M-2] = logadd(log(N-M*a-1.0)+saveS, lastS);
 	    sp->Sf[N-3][M-2] = sp->SfrontN[M-2];
-	    assert(isfinite(sp->Sf[N-3][M-2]));
+	    assert(ISFINITE(sp->Sf[N-3][M-2]));
 	    lastS = saveS;
 	  }
 	  //   save the SfrontM value
@@ -433,11 +433,11 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
 	    logadd(log(N-M*a-1.0)+saveS, lastS);
 	  sp->Sf[N-3][M-2] = sp->SfrontN[M-2];
 #ifndef NDEBUG
-	  if ( !isfinite(sp->Sf[N-3][M-2]) ) 
+	  if ( !ISFINITE(sp->Sf[N-3][M-2]) ) 
 	    yaps_quit("Building '%s' N to %d, sp->Sf[%d][%d] not finite, from %lf,%lf\n",
 		      sp->tag, usedN, N-3, M-2,  saveS, lastS);
 #endif
-	  assert(isfinite(sp->Sf[N-3][M-2]));
+	  assert(ISFINITE(sp->Sf[N-3][M-2]));
 	  lastS = saveS;
 	}
 	//   save the SfrontM value
@@ -820,9 +820,9 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
 double S_S1(stable_t *sp, unsigned n) {
   // int nin = n;
   if ( n==0 )
-    return -INFINITY;
+    return -HUGE_VAL;
   if ( !sp->S1 )
-    return -INFINITY;
+    return -HUGE_VAL;
   if ( n>sp->usedN ) {
 #ifdef S_USE_THREADS
     if ( (sp->flags&S_THREADS) ) 
@@ -838,7 +838,7 @@ double S_S1(stable_t *sp, unsigned n) {
 	 */
 	int i;
 	if ( n>sp->maxN ) {
-	  return -INFINITY;
+	  return -HUGE_VAL;
 	}
 	if ( n<sp->usedN1*1.1 )
 	  n = sp->usedN1*1.1;
@@ -848,7 +848,7 @@ double S_S1(stable_t *sp, unsigned n) {
 	  n = sp->maxN;
 	myrealloc(sp->S1, sizeof(sp->S1[0])*n);
 	if ( !sp->S1 ) {
-	  return -INFINITY;
+	  return -HUGE_VAL;
 	}
 	for (i=sp->usedN1; i<n; i++) 
 	  sp->S1[i] = 0;
@@ -883,7 +883,7 @@ double S_U(stable_t *sp, unsigned n, unsigned m) {
 double S_UV(stable_t *sp, unsigned n, unsigned m) {
   double SV;
   if ( m==1 )
-    return -INFINITY;
+    return -HUGE_VAL;
   if ( m==n+1 )
    return 1;
  SV = S_V(sp,n,m);
@@ -926,13 +926,13 @@ return sp->V[n-2][m-2];
 
 double S_S(stable_t *sp, unsigned N, unsigned T) {
   if ( (sp->flags & S_STABLE)==0 )
-    return -INFINITY;
+    return -HUGE_VAL;
   if ( N==T )
     return 0;
   if ( T==1 )
     return S_S1(sp, N);
   if ( N<T || T==0 )
-    return -INFINITY;
+    return -HUGE_VAL;
   if ( T>sp->usedM || N>sp->usedN ) {
     if ( N>sp->maxN || T>sp->maxM  ) {
       if ( (sp->flags & S_QUITONBOUND) )
@@ -942,7 +942,7 @@ double S_S(stable_t *sp, unsigned N, unsigned T) {
        else 
          yaps_quit("S_S(%u,%u,%lf) hit bounds\n",N,T,sp->a);
        else
-         return -INFINITY;
+         return -HUGE_VAL;
      }
      if ( S_extend(sp,N+1,T+1) )
       yaps_quit("S_extend() out of memory\n");
