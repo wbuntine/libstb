@@ -42,9 +42,12 @@
 #define S_THREADS 32
 
 /*
- *   define if compiling in threads
+ *   define S_USE_THREADS if compiling in threads
  */
+#ifdef H_THREADS
 #define S_USE_THREADS
+#endif
+
 #ifdef S_USE_THREADS
 #include <pthread.h>
 #endif
