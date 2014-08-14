@@ -56,3 +56,6 @@ To version libstb-1.81
 *       removed big pdf files
 *       changed documentation
 *       renamed "rng.h" ... too common
+
+To version libstb-1.82
+*       added a bound arg to sympoly

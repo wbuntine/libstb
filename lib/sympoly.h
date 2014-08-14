@@ -44,18 +44,19 @@
  *     res[1] = e_1(x_0,...,x_{K-1})
  *     res[2] = e_2(x_0,...,x_{K-1})
  *     ...
- *     res[K] = e_K(...)
+ *     res[BK] = e_BK(...)
+ *  i.e.  BK used as bound, should be <=K
  *
- *  is O(K^2) 
+ *  is O(K^2) when BK=K, otherwise O(K*BK)
  *
  *  if values get too big, log overflow will appear in (*overflow),
  *    reconstruct values as
- *       res[0], exp(*overflow)*(res[1],...,res[K])
+ *       res[0], exp(*overflow)*(res[1],...,res[BK])
  *  otherwise  overflow=0
  *
  *  return non-zero on error (e.g.,  K too big)
  */
-int sympoly(int K, double *val, double *res, double *overflow);
+int sympoly(int K, int BK, double *val, double *res, double *overflow);
 
 /*
  *    sample exactly H of the K features proportional to

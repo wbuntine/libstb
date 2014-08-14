@@ -57,12 +57,17 @@
  *
  *  return non-zero on error
  */
-int sympoly(int K, double *val, double *res, double *overflow) {
+int sympoly(int K, int BK, double *val, double *res, double *overflow) {
   int h, k;
   double mult = 1;           //  keeps scaled res[0]
   /*
    *   e_0=1 regardless
    */
+  BK++;
+  if ( BK>K )
+    BK = K;
+  if ( BK<=1 )
+    BK = 2;
   *overflow = 0;
   res[0] = 1;
   for (k=1; k<=K; k++) 
@@ -76,7 +81,7 @@ int sympoly(int K, double *val, double *res, double *overflow) {
       double lastv = mult;
       mult /= vk;
       *overflow += log(vk);
-      for (h=1; h<=k; h++) {
+      for (h=1; h<=k && h<BK; h++) {
 	double thisv = res[h];
 	res[h] = thisv/vk + lastv;
 	lastv = thisv;
@@ -84,7 +89,7 @@ int sympoly(int K, double *val, double *res, double *overflow) {
       res[h] = lastv;
     } else {
       double lastv = mult;
-      for (h=1; h<=k; h++) {
+      for (h=1; h<=k && h<BK; h++) {
 	double thisv = res[h];
 	res[h] += vk*lastv;
 	lastv = thisv;
@@ -97,7 +102,7 @@ int sympoly(int K, double *val, double *res, double *overflow) {
      *  remove overflow if doesn't appear useful
      */
     double eo = exp(*overflow);
-    for (h=1; h<=K; h++)
+    for (h=1; h<=BK; h++)
       res[h] *= eo;
     *overflow = 0;
   }
@@ -242,12 +247,13 @@ uint32_t sympoly_sample(int K, int H, double *val, rngp_t rng) {
 #include <time.h>
 
 #define KMAX 20
-main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   int K=10;
   double val[KMAX+1], 
     res[KMAX+1];
   double overflow;
   int k;
+  rngp_t rng=NULL;
 
   // srand48(time(NULL));
   srand48(10);
@@ -265,7 +271,7 @@ main(int argc, char* argv[]) {
   for (k=0; k<=K; k++)  printf(" %lg", res[k]);
   printf("\n");
 #endif
-  sympoly(K, val, res, &overflow);
+  sympoly(K, K, val, res, &overflow);
   printf("Res overflow = %lg\n", overflow);
   printf("Res2:  %lg", res[0]);
   for (k=1; k<=K; k++)  printf(" %lg", exp(overflow)*res[k]);
@@ -273,10 +279,16 @@ main(int argc, char* argv[]) {
   printf("Res2:  %lg", res[0]);
   for (k=1; k<=K; k++)  printf(" %lg", res[k]);
   printf("\n");
+  sympoly(K, K/2, val, res, &overflow);
+  printf("Res bound overflow = %lg\n", overflow);
+  printf("Res bound:  %lg", res[0]);
+  for (k=1; k<=K/2; k++)  printf(" %lg", exp(overflow)*res[k]);
+  printf("\n");
+
   
   printf("Sampled2: ");
   for (k=0; k<10; k++) 
-    printf(" %x",  sympoly_sample(K, 6, val));
+    printf(" %x",  sympoly_sample(K, 6, val, rng));
   printf("\n");
   return 1;
 }
