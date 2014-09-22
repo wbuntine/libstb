@@ -112,6 +112,12 @@ int main(int argc, char* argv[])
       printf(" %10.6lg", S_U(S,n,t));
     printf("\n");
   }
+  for (n=2; n<8; n++ ) {
+    printf("UV(%d,%d) = %10.6lg", n, 2, S_UV(S,n,2));
+    for (t=3; t<=n; t++)
+      printf(" %10.6lg", S_UV(S,n,t));
+    printf("\n");
+  }
 #else
   {
     /*

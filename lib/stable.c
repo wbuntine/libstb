@@ -884,10 +884,14 @@ double S_UV(stable_t *sp, unsigned n, unsigned m) {
   double SV;
   if ( m==1 )
     return -HUGE_VAL;
+  /*  identity because S^n_n==1 */
   if ( m==n+1 )
    return 1;
- SV = S_V(sp,n,m);
- return (n - m*sp->a)*SV + 1.0;
+  /*  identity because U^n_n = n(n+1)(1-a)/2  */
+  if ( m==n )
+    return (n+1.0)/(n-1.0);
+  SV = S_V(sp,n,m);
+  return (n - m*sp->a)*SV + 1.0;
 }
 
 
