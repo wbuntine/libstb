@@ -204,9 +204,14 @@ int arms (double *xinit, int ninit, double *xl, double *xr,
   if(metrop->on){
     if((*xprev < *xl) || (*xprev > *xr)){
       /* previous markov chain iterate out of range */
+      if( (*xprev < *xl) )
+	*xsamp = *xl;
+      if( (*xprev > *xr) )
+	*xsamp = *xr;
       free(env->p);
       free(env);
       free(metrop);
+      
       return 1007;
     }
     metrop->xprev = *xprev;
