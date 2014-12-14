@@ -177,6 +177,7 @@ int arms (double *xinit, int ninit, double *xl, double *xr,
     /* insufficient space */
     return 1006;
   }
+  env->p = NULL;
 
   /* start setting up metropolis struct */
   metrop = (METROPOLIS *)malloc(sizeof(METROPOLIS));
@@ -191,10 +192,11 @@ int arms (double *xinit, int ninit, double *xl, double *xr,
   err = initial(xinit,ninit,*xl,*xr,npoint,&lpdf,env,convex,
         neval,metrop);
   if (err) {
-	free(env->p);
-	free(env);
-	free(metrop);
-	return err;
+    if ( env->p )
+      free(env->p);
+    free(env);
+    free(metrop);
+    return err;
   }
 
   /* finish setting up metropolis struct (can only do this after */
