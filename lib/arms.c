@@ -91,7 +91,7 @@ double perfunc(FUNBAG *lpdf, ENVELOPE *env, double x);
 
 void display(FILE *f, ENVELOPE *env);
 
-double u_random();
+double u_random(void);
 
 /* *********************************************************************** */
 
