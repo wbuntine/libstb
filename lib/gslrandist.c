@@ -50,7 +50,7 @@
  *
  */
 
-static double rng_uniform_pos () {
+static double rng_uniform_pos (void) {
   double ran = rng_unit();
   while (ran==0)
     ran = rng_unit();
