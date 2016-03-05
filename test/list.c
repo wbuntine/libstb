@@ -27,6 +27,7 @@
  */
 float  apar = 0.0, bpar = 1.0;
 
+int maxn = 8;
 int N=200;
 int T=30;
 
@@ -38,8 +39,9 @@ void usage() {
 	  "   -a val    # discount par (default=%f)\n"
 	  "   -h           # print help message\n"
 	  "   -N samples   # number of samples (default=%d)\n"
-	  "   -T max       # maximum t for building tables (default=%d)\n",
-	  apar, N, T);
+	  "   -T max       # maximum t for building tables (default=%d)\n"
+	  "   -n max       # maximum n for in final tables (default=%d)\n",
+	  apar, N, T, maxn);
 }
 
 int main(int argc, char* argv[])
@@ -51,7 +53,7 @@ int main(int argc, char* argv[])
   /*
    *  default values for args
    */
-  while ( (c=getopt(argc, argv,"ha:N:T:"))>=0 ) {
+  while ( (c=getopt(argc, argv,"ha:N:n:T:"))>=0 ) {
     switch ( c ) {
     case 'a':
       if ( !optarg || sscanf(optarg,"%f",&apar)!=1 )
@@ -60,6 +62,10 @@ int main(int argc, char* argv[])
     case 'N':
       if ( !optarg || sscanf(optarg,"%d",&N)!=1 )
 	yaps_quit("Need a valid 'N' argument\n");
+      break;
+    case 'n':
+      if ( !optarg || sscanf(optarg,"%d",&maxn)!=1 )
+	yaps_quit("Need a valid 'n' argument\n");
       break;
     case 'T':
       if ( !optarg || sscanf(optarg,"%d",&T)!=1 )
@@ -94,25 +100,25 @@ int main(int argc, char* argv[])
   for (n=T+1; n<=2*N; n++) 
     printf("S(%d,%d..) = %10.6lg %10.6lg\n", n, T, S_S(S,n,T), S_S(S,n,T+1));
   
-  for (n=2; n<8; n++ ) {
+  for (n=2; n<maxn; n++ ) {
     printf("S(%d,%d) = %10.6lg ", n, 1, S_S(S,n,1));
     for (t=2; t<=n; t++)
       printf(" %10.6lg", S_S(S,n,t));
     printf("\n");
   }
-  for (n=2; n<8; n++ ) {
+  for (n=2; n<maxn; n++ ) {
     printf("V(%d,%d) = %10.6lg", n, 2, S_V(S,n,2));
     for (t=3; t<=n; t++)
       printf(" %10.6lg", S_V(S,n,t));
     printf("\n");
   }
-  for (n=2; n<8; n++ ) {
+  for (n=2; n<maxn; n++ ) {
     printf("U(%d,%d) = %10.6lg", n, 2, S_U(S,n,2));
     for (t=3; t<=n; t++)
       printf(" %10.6lg", S_U(S,n,t));
     printf("\n");
   }
-  for (n=2; n<8; n++ ) {
+  for (n=2; n<maxn; n++ ) {
     printf("UV(%d,%d) = %10.6lg", n, 2, S_UV(S,n,2));
     for (t=3; t<=n; t++)
       printf(" %10.6lg", S_UV(S,n,t));
