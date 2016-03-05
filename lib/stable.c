@@ -1041,3 +1041,15 @@ void S_report(stable_t *sp, FILE *fp) {
     yaps_message("\n");
   }
 }
+
+double S_asympt(stable_t *sp, unsigned n, unsigned m) {
+  double build = 0;
+  build += lgamma((double)n);
+  build += -lgamma(1.0-sp->a);
+  build += -lgamma((double)m);
+  build += - (m-1.0)*log(sp->a)
+    build += - sp->a*log((double)n);
+  return build;
+  // return lgamma((double)n)-lgamma(1.0-sp->a)-lgamma((double)m)
+  //  - (m-1.0)*log(sp->a) - sp->a*log((double)n);
+}

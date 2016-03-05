@@ -23,6 +23,11 @@
 #include "stable.h"
 
 /*
+ *   define to print tables iof U, V, UV as well
+ */
+// #define S_printUV
+
+/*
  *   parameters and hyper parameters
  */
 float  apar = 0.0, bpar = 1.0;
@@ -35,6 +40,7 @@ void usage() {
   fprintf(stderr,"    print table of values for S_V(), S_U() and S_S()\n");
   fprintf(stderr,
           "Options are:\n"
+	  "   -A        # test asymptotic expression\n"
 	  "   -a val    # discount par (default=%f)\n"
 	  "   -h           # print help message\n"
 	  "   -N samples   # number of samples (default=%d)\n"
@@ -47,12 +53,16 @@ int main(int argc, char* argv[])
   int c;
   int n, t;
   stable_t *S;
+  int asymptote = 0;
 
   /*
    *  default values for args
    */
-  while ( (c=getopt(argc, argv,"ha:N:T:"))>=0 ) {
+  while ( (c=getopt(argc, argv,"Aha:N:T:"))>=0 ) {
     switch ( c ) {
+    case 'A':
+      asymptote ++;
+      break;
     case 'a':
       if ( !optarg || sscanf(optarg,"%f",&apar)!=1 )
 	yaps_quit("Need a valid 'a' argument\n");
@@ -77,6 +87,20 @@ int main(int argc, char* argv[])
   
   S_report(S, stdout);
 
+  if ( asymptote ) {
+    printf("Asymptotic:\n");
+    if ( S->a>0 ) {
+      for (n=10; n<=2*N; n+=2) {
+	for (t=2; t<n && t<T; t+=2) {
+	  printf("S(%d,%d) = %10.6lg\n", n, t,
+		 S_S(S,n,t)-S_asympt(S,n,t)+0.07*pow(t,1.3));
+	}
+      }
+    } else {
+      printf("Asymptote requires a>0\n");
+    }
+    goto fini;
+  }
 #if 1
   /*
    *   list various values
@@ -91,8 +115,16 @@ int main(int argc, char* argv[])
   for (t=2; t<=2*T+10; t++) 
     printf("S(%d,%d) = %10.6lg, V=%lg U=%lg\n", N+10, t, 
 	   S_S(S,N+10,t), S_V(S,N+10,t), S_U(S,N+10,t));
+
+  printf("Fixed m:\n");
   for (n=T+1; n<=2*N; n++) 
     printf("S(%d,%d..) = %10.6lg %10.6lg\n", n, T, S_S(S,n,T), S_S(S,n,T+1));
+
+  if ( S->a>0 ) {
+    printf("Asymptotic:\n");
+    for (n=T+1; n<=2*N; n++) 
+      printf("S(%d,%d) = %10.6lg %10.6lg\n", n, T, S_S(S,n,T), S_asympt(S,n,T));
+  }
   
   for (n=2; n<8; n++ ) {
     printf("S(%d,%d) = %10.6lg ", n, 1, S_S(S,n,1));
@@ -134,6 +166,8 @@ int main(int argc, char* argv[])
       printf("p(m=%d) = %lg\n", t, prob[t]/probtot );
   }
 #endif
+
+ fini:
 
   S_report(S, stdout);
   S_free(S);

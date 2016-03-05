@@ -158,6 +158,13 @@ double S_S(stable_t *sp, unsigned n, unsigned m);
 double S_S1(stable_t *sp, unsigned n);
 
 /*
+ *   return Hutter's asymptotic expression
+ *     S^n_{m,a} = \Gamma(n) / (\Gamma(1-a)\Gamma(m)a^{m-1)n^a)
+ *   as log
+ */
+double S_asympt(stable_t *sp, unsigned n, unsigned m);
+
+/*
  *    return U^n_{m,a} = S^{n+1}_{m,a}/S^{n}_{m,a} 
  *    computed from T_V(), for m>=1
  *    return 0 if illegal inputs or out of bounds, or no table
