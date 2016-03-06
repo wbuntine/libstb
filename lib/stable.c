@@ -1047,7 +1047,7 @@ double S_asympt(stable_t *sp, unsigned n, unsigned m) {
   build += lgamma((double)n);
   build += -lgamma(1.0-sp->a);
   build += -lgamma((double)m);
-  build += - (m-1.0)*log(sp->a)
+  build += - (m-1.0)*log(sp->a);
     build += - sp->a*log((double)n);
   return build;
   // return lgamma((double)n)-lgamma(1.0-sp->a)-lgamma((double)m)
