@@ -328,7 +328,7 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
   sp->a = a;
   sp->lga = lgamma(1.0-a);
 
-  // yaps_message("S_remake_part(a=%lf,N=%u, M=%u)\n", a, startN, startM);
+  //  yaps_message("S_remake_part(a=%lf, start: N=%u, M=%u, used: N=%u, M=%u, usedN1=%u)\n", a, startN, startM, usedN, usedM, usedN1);
 
   /*
    *  need to reset at sp->S1[] least to usedN1;
@@ -340,7 +340,9 @@ stable_t *S_make(unsigned initN, unsigned initM, unsigned maxN, unsigned maxM,
     N = 2;
   } else {
     N = startN+1;
-    assert(sp->S1[startN-1]>0 );
+    // assert(sp->S1[startN-1]>0); ???
+    if ( sp->S1[startN-1]==0 )
+      sp->S1[startN-1] = lgamma(startN - sp->a) - sp->lga;
   }
   for ( ; N<=usedN; N++)
     sp->S1[N-1] = sp->S1[N-2] + log(N-1-a);
