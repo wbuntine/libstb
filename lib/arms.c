@@ -218,6 +218,9 @@ int arms (double *xinit, int ninit, double *xl, double *xr,
     metrop->yprev = perfunc(&lpdf,env,*xprev);
   }
 
+  /*WRAY   count number of times fail rejection */
+  int sd = 0;
+
   /* now do adaptive rejection */
   do {
     /* sample a new point */
@@ -234,7 +237,15 @@ int arms (double *xinit, int ninit, double *xl, double *xr,
       free(env);
       free(metrop);
       return 2000;
-    }  
+    }
+    /*WRAY  check */ 
+    sd++;
+    if ( sd>100 ) {
+      free(env->p);
+      free(env);
+      free(metrop);
+      return 2001;
+    }
   } while (msamp < nsamp);
 
   /* nsamp points now sampled */
