@@ -33,6 +33,7 @@
  *                   otherwise return 0 or log(0)
  *   S_THREADS - needs S_USE_THREADS defined, then locks
  *               during critical non-reentrant stuff
+ *   S_ASYMPT - use asymptote when N gets too big
  */
 #define S_STABLE 1
 #define S_UVTABLE 2
@@ -40,6 +41,7 @@
 #define S_VERBOSE 8
 #define S_QUITONBOUND 16
 #define S_THREADS 32
+#define S_ASYMPT 64
 
 /*
  *   define S_USE_THREADS if compiling in threads

@@ -890,7 +890,7 @@ double S_UV(stable_t *sp, unsigned n, unsigned m) {
   /*  identity because U^n_n = n(n+1)(1-a)/2  */
   if ( m==n )
     return (n+1.0)/(n-1.0);
-  SV = S_V(sp,n,m);
+  SV = S_V(sp,n,m); 
   return (n - m*sp->a)*SV + 1.0;
 }
 
@@ -900,32 +900,40 @@ double S_V(stable_t *sp, unsigned n, unsigned m) {
     return 0;
   if ( m>=sp->usedM-1 || n>=sp->usedN-1 ) {
     if ( n>sp->maxN || m>sp->maxM  ) {
+      if ( n>sp->maxN && (sp->flags & S_ASYMPT) ) {
+	if ( sp->a>0 )
+	  return (1.0-pow(n,-sp->a))/sp->a/(m-1);
+	else {
+	  double ln = log(n);
+	  return  ln/(m-1) * exp(gamma(1+(m-2)/ln)-gamma(1+(m-1)/ln));
+	}
+      }	  
       if ( (sp->flags & S_QUITONBOUND) ) {
-       assert(n>sp->maxN || m>sp->maxM);
-       if ( sp->tag )
-         yaps_quit("S_V(%u,%u,%lf) tagged '%s' hit bounds (%u,%u)\n",n,m,sp->a,
-          sp->tag, sp->maxN, sp->maxM);
-       else 
-         yaps_quit("S_V(%u,%u,%lf) hit bounds\n",n,m,sp->a);
-     } else
-     return 0;
-   }
+	assert(n>sp->maxN || m>sp->maxM);
+	if ( sp->tag )
+	  yaps_quit("S_V(%u,%u,%lf) tagged '%s' hit bounds (%u,%u)\n",n,m,sp->a,
+		    sp->tag, sp->maxN, sp->maxM);
+	else 
+	  yaps_quit("S_V(%u,%u,%lf) hit bounds\n",n,m,sp->a);
+      } else
+	return 0;
+    }
     // yaps_message("S_V(%s,%d,%d) calling extend\n", sp->tag, n, m);
-   if ( S_extend(sp,n+1,m+1) ) 
-       yaps_quit("S_extend() out of memory\n");
-}
-assert(m>=2);
-if ( n<m ) return 0;
-if ( sp->flags & S_FLOAT ) {
-  assert(sp->Vf);
-  if ( sp->Vf[n-2]==NULL )
-    yaps_quit("S_V(%s,%u,%u) Vf memory unavailable\n", sp->tag, n, m);
-  assert(sp->Vf[n-2]);
-  return sp->Vf[n-2][m-2];
-}
-assert(sp->V);
-assert(sp->V[n-2]);
-return sp->V[n-2][m-2];
+    if ( S_extend(sp,n+1,m+1) ) 
+      yaps_quit("S_extend() out of memory\n");
+  }
+  assert(m>=2);
+  if ( n<m ) return 0;
+  if ( sp->flags & S_FLOAT ) {
+    assert(sp->Vf);
+    if ( sp->Vf[n-2]==NULL )
+      yaps_quit("S_V(%s,%u,%u) Vf memory unavailable\n", sp->tag, n, m);
+    assert(sp->Vf[n-2]);
+    return sp->Vf[n-2][m-2];
+  }
+  assert(sp->V);
+  assert(sp->V[n-2]);
+  return sp->V[n-2][m-2];
 }
 
 double S_S(stable_t *sp, unsigned N, unsigned T) {
@@ -939,6 +947,8 @@ double S_S(stable_t *sp, unsigned N, unsigned T) {
     return -HUGE_VAL;
   if ( T>sp->usedM || N>sp->usedN ) {
     if ( N>sp->maxN || T>sp->maxM  ) {
+      if ( N>sp->maxN && (sp->flags & S_ASYMPT) )
+	return S_asympt(sp, N, T);
       if ( (sp->flags & S_QUITONBOUND) )
        if ( sp->tag )
          yaps_quit("S_S(%u,%u,%lf) tagged '%s' hit bounds\n",N,T,sp->a,
@@ -1040,16 +1050,34 @@ void S_report(stable_t *sp, FILE *fp) {
 #endif
     yaps_message("\n");
   }
-}
+} 
 
 double S_asympt(stable_t *sp, unsigned n, unsigned m) {
-  double build = 0;
-  build += lgamma((double)n);
-  build += -lgamma(1.0-sp->a);
-  build += -lgamma((double)m);
-  build += - (m-1.0)*log(sp->a);
-    build += - sp->a*log((double)n);
-  return build;
-  // return lgamma((double)n)-lgamma(1.0-sp->a)-lgamma((double)m)
-  //  - (m-1.0)*log(sp->a) - sp->a*log((double)n);
+  if ( sp->a==0 ) {
+    /*
+     *   https://www.researchgate.net/publication/2415504_Asymptotic_Expansions_for_the_Stirling_Numbers_of_the_First_Kind
+     *   Asymptotic Expansions for the Stirling Numbers of the First Kind
+     *   Hsien-Kuei Hwang, 2001
+     */
+    double ln = log(n);
+    return gamma(n) + (m-1)*log(ln) - gamma(m) - gamma(1+(m-1)/ln);
+  } else {
+    double prod = 0;
+    double sum = 1.0;
+    double la1 = lgamma(1.0-sp->a);
+    double aln = sp->a*log((double)n);
+    double np = pow(n,-sp->a);
+    /*
+     *    this works pretty well, but want a small factor
+     *    of pow(n, ...), say  pow(0.2*n, ...)
+     *    make that forma table
+     */
+    prod += lgamma((double)n) - la1 - lgamma((double)m)
+      - (m-1.0)*log(sp->a) - aln;
+    if ( np<1e-5 ) {
+      prod -= (m-1)*np*(1+np*(0.5+np/3.0));
+    } else
+      prod += (m-1)*log(1.0-np);
+    return prod;
+  }
 }

@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 {
   int c;
   int n, t;
-  stable_t *S;
+  stable_t *S, *SA;
   int asymptote = 0;
 
   /*
@@ -90,20 +90,20 @@ int main(int argc, char* argv[])
       
   if ( !(S=S_make(N+1,T,2*N,2*T,apar,S_UVTABLE|S_STABLE|S_VERBOSE)) )
     yaps_quit("S_make failed\n");
+  if ( !(SA=S_make(20,10,20,10,apar,S_UVTABLE|S_STABLE|S_VERBOSE|S_ASYMPT)) )
+    yaps_quit("S_make (approx) failed\n");
   
   S_report(S, stdout);
 
   if ( asymptote ) {
-    printf("Asymptotic:\n");
-    if ( S->a>0 ) {
-      for (n=10; n<=2*N; n+=2) {
-	for (t=2; t<n && t<T; t+=2) {
-	  printf("S(%d,%d) = %10.6lg\n", n, t,
-		 S_S(S,n,t)-S_asympt(S,n,t)+0.07*pow(t,1.3));
-	}
+    printf("Asymptotic diff:\n");
+    for (n=10; n<=2*N; n+=2) {
+      for (t=T/2; t<n && t<T; t+=2) {
+	printf("S(%d,%d),U,V,UV = %10.6lg %10.6lg %10.6lg %10.6lg\n", n, t,
+	       S_S(S,n,t)-S_S(SA,n,t), S_U(S,n,t)/S_U(SA,n,t),
+	       S_V(S,n,t)/S_V(SA,n,t), S_UV(S,n,t)/S_UV(SA,n,t)
+	       );
       }
-    } else {
-      printf("Asymptote requires a>0\n");
     }
     goto fini;
   }
@@ -126,11 +126,9 @@ int main(int argc, char* argv[])
   for (n=T+1; n<=2*N; n++) 
     printf("S(%d,%d..) = %10.6lg %10.6lg\n", n, T, S_S(S,n,T), S_S(S,n,T+1));
 
-  if ( S->a>0 ) {
-    printf("Asymptotic:\n");
-    for (n=T+1; n<=2*N; n++) 
-      printf("S(%d,%d) = %10.6lg %10.6lg\n", n, T, S_S(S,n,T), S_asympt(S,n,T));
-  }
+  printf("Asymptotic:\n");
+  for (n=T+1; n<=2*N; n++) 
+    printf("S(%d,%d) = %10.6lg %10.6lg\n", n, T, S_S(S,n,T), S_asympt(S,n,T));
   
   for (n=2; n<maxn; n++ ) {
     printf("S(%d,%d) = %10.6lg ", n, 1, S_S(S,n,1));
