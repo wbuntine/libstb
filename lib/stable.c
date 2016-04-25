@@ -1065,7 +1065,6 @@ double S_asympt(stable_t *sp, unsigned n, unsigned m) {
     return gamma(n) + (m-1)*log(ln) - gamma(m) - gamma(1+(m-1)/ln);
   } else {
     double prod = 0;
-    double sum = 1.0;
     double la1 = lgamma(1.0-sp->a);
     double aln = sp->a*log((double)n);
     double np = pow(n,-sp->a);
