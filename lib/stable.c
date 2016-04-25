@@ -839,7 +839,7 @@ double S_S1(stable_t *sp, unsigned n) {
 	 *   possibly extend memory and initialise
 	 */
 	int i;
-	if ( n>sp->maxN ) {
+	if ( n>sp->maxN && !(sp->flags & S_ASYMPT) ) {
 	  return -HUGE_VAL;
 	}
 	if ( n<sp->usedN1*1.1 )

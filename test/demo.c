@@ -60,7 +60,7 @@ int verbose = 0;
 //    H() is discrete distribution with this dimension
 #define DIM 20
 //    number of multinomials sampled
-#define NUMMN 5
+#define NUMMN 3
 //    array limits
 #define MAXSTAB 1000
 #define MAXTAB 1000
@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
   if ( acycle && apar==0 )
     apar = 0.5;
  
-  yaps_message("Running with a=%f, b=%f, N=%d, D=%d\n", 
+  yaps_message("Setting a=%f, b=%f, N=%d, D=%d\n", 
 	       apar, bpar, useN, NUMMN);
   yaps_message("             burnin=%d,", burnin);
   yaps_message(" cycles=%d\n", ITER);
